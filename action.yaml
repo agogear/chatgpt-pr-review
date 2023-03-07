@@ -1,4 +1,4 @@
-name: "PR Chat Review"
+name: "PR ChatGPT Review"
 description: "Automatically generate GitHub PR review comments by sending contents of changed files to OpenAI ChatGPT engine."
 inputs:
   openai_api_key:
