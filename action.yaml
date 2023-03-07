@@ -12,7 +12,8 @@ inputs:
     required: true
   files:
     description: "Comma separated list of files to target for review"
-    required: true
+    required: false
+    default: "*"
   openai_model:
     description: "GPT-3 model name."
     required: false
