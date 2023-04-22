@@ -1,0 +1,14 @@
+name: pr-review
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  review:
+    name: ChatGPT code review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: agogear/chatgpt-pr-review@0.0.2
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          github_token: ${{ secrets.ACCESS_TOKEN }}
+          github_pr_id: ${{ github.event.number }}
