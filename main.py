@@ -60,7 +60,7 @@ def line_start_patch(patch: str) -> int:
     return int(match.group(1))
 
 
-def files_for_review(pull: PullRequest, patterns: List[str]) -> Iterable[Tuple[str, int, Commit.Commit]]:
+def files_for_review(pull: PullRequest.PullRequest, patterns: List[str]) -> Iterable[Tuple[str, int, Commit.Commit]]:
     changes = {}
     commits = pull.get_commits()
     for commit in commits:
@@ -68,7 +68,7 @@ def files_for_review(pull: PullRequest, patterns: List[str]) -> Iterable[Tuple[s
             if file.status in ["unchanged", "removed"]:
                 continue
             for pattern in patterns:
-                if fnmatch(file.filename, pattern) and not changes.get(file.filename, None):
+                if fnmatch(file.filename, pattern) and not changes.get(file.filename, None) and file.patch:
                     changes[file.filename] = (
                         line_start_patch(file.patch), commit)
 
