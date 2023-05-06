@@ -90,6 +90,7 @@ def files_for_review(
                 info(
                     f"skipping file {file.filename} in commit {commit.sha} because it has no patch"
                 )
+                continue
             for pattern in patterns:
                 if fnmatch(file.filename, pattern):
                     changes[file.filename] = (line_start_patch(file.patch), commit)
@@ -168,7 +169,9 @@ def main():
     for filename, line, commit in files_for_review(pull, file_patterns):
         content = repo.get_contents(filename, commit.sha).decoded_content.decode("utf8")
         if len(content) == 0:
-            info(f"skipping file {filename} in commit {commit.sha} because the file is empty")
+            info(
+                f"skipping file {filename} in commit {commit.sha} because the file is empty"
+            )
             continue
         comments.append(
             {
