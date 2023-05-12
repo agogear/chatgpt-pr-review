@@ -66,11 +66,6 @@ def is_merge_commit(commit: Commit.Commit) -> bool:
     return len(commit.parents) > 1
 
 
-def line_start_patch(patch: str) -> int:
-    match = search(r"^@@ [-+](\d*),", patch)
-    return int(match.group(1))
-
-
 def files_for_review(
     pull: PullRequest.PullRequest, patterns: List[str]
 ) -> Iterable[Tuple[str, int, Commit.Commit]]:
@@ -86,16 +81,15 @@ def files_for_review(
                     f"skipping file {file.filename} in commit {commit.sha} because its status is {file.status}"
                 )
                 continue
-            if not file.patch:
+            if not file.patch or file.patch == "":
                 info(
                     f"skipping file {file.filename} in commit {commit.sha} because it has no patch"
                 )
                 continue
             for pattern in patterns:
                 if fnmatch(file.filename, pattern):
-                    changes[file.filename] = (line_start_patch(file.patch), commit)
-
-    return [(x[0], max(1, x[1][0]), x[1][1]) for x in changes.items()]
+                    changes[file.filename] = commit
+    return changes.items()
 
 
 def review(
@@ -166,7 +160,7 @@ def main():
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull = repo.get_pull(args.github_pr_id)
     comments = []
-    for filename, line, commit in files_for_review(pull, file_patterns):
+    for filename, commit in files_for_review(pull, file_patterns):
         content = repo.get_contents(filename, commit.sha).decoded_content.decode("utf8")
         if len(content) == 0:
             info(
@@ -176,7 +170,8 @@ def main():
         comments.append(
             {
                 "path": filename,
-                "line": line,
+                # "line": line,
+                "position": 1,
                 "body": review(
                     filename,
                     content,
