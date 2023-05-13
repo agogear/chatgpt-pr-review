@@ -6,5 +6,5 @@ python /main.py \
 --files "$4" \
 --openai_model "$5" \
 --openai_temperature "$6" \
---openai_max_tokens "$7"
+--openai_max_tokens "$7" \
 --logging "$8"
