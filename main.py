@@ -95,7 +95,8 @@ def files_for_review(
 def review(
     filename: str, content: str, model: str, temperature: float, max_tokens: int
 ) -> str:
-    for _ in range(OPENAI_MAX_RETRIES):
+    x = 0
+    while True:
         try:
             chat_review = (
                 openai.ChatCompletion.create(
@@ -114,11 +115,14 @@ def review(
             )
             return f"*ChatGPT review for {filename}:*\n" f"{chat_review}"
         except openai.error.RateLimitError:
-            info("OpenAI rate limit hit, backing off and trying again...")
-            sleep(OPENAI_BACKOFF_SECONDS)
-    Exception(
-        f"finally failing request to OpenAI platform for code review, max retries {OPENAI_MAX_RETRIES} exceeded"
-    )
+            if x < OPENAI_MAX_RETRIES:
+                info("OpenAI rate limit hit, backing off and trying again...")
+                sleep(OPENAI_BACKOFF_SECONDS)
+                x+=1
+            else:
+                raise Exception(
+                    f"finally failing request to OpenAI platform for code review, max retries {OPENAI_MAX_RETRIES} exceeded"
+                )
 
 
 def main():
