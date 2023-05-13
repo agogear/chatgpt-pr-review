@@ -26,6 +26,10 @@ inputs:
     description: "The maximum number of tokens to generate in the completion."
     required: false
     default: "2048"
+  logging:
+    description: "The level to log at. One of [debug, info, warning, error]"
+    required: false
+    default: "warning"
 runs:
   using: "docker"
   image: "Dockerfile"
@@ -37,3 +41,4 @@ runs:
     - ${{ inputs.openai_model }}
     - ${{ inputs.openai_temperature }}
     - ${{ inputs.openai_max_tokens }}
+    - ${{ inputs.logging }}
