@@ -1,5 +1,5 @@
 from fnmatch import fnmatch
-from logging import info
+from logging import info, basicConfig, getLevelName, debug
 from time import sleep
 import os
 from typing import Iterable, List, Tuple
@@ -68,7 +68,7 @@ def is_merge_commit(commit: Commit.Commit) -> bool:
 
 def files_for_review(
     pull: PullRequest.PullRequest, patterns: List[str]
-) -> Iterable[Tuple[str, int, Commit.Commit]]:
+) -> Iterable[Tuple[str, Commit.Commit]]:
     changes = {}
     commits = pull.get_commits()
     for commit in commits:
@@ -151,8 +151,16 @@ def main():
         "--files",
         help="Comma separated list of UNIX file patterns to target for review",
     )
+    parser.add_argument(
+        "--logging",
+        default="warning",
+        type=str,
+        help="logging level",
+        choices=["debug", "info", "warning", "error"],
+    )
     args = parser.parse_args()
 
+    basicConfig(encoding="utf-8", level=getLevelName(args.logging.upper()))
     file_patterns = args.files.split(",")
     openai.api_key = args.openai_api_key
     g = Github(args.github_token)
@@ -160,27 +168,33 @@ def main():
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull = repo.get_pull(args.github_pr_id)
     comments = []
-    for filename, commit in files_for_review(pull, file_patterns):
+    files = files_for_review(pull, file_patterns)
+    info(f"files for review: {files}")
+    for filename, commit in files:
+        debug(f"starting review for file {filename} and commit sha {commit.sha}")
         content = repo.get_contents(filename, commit.sha).decoded_content.decode("utf8")
         if len(content) == 0:
             info(
                 f"skipping file {filename} in commit {commit.sha} because the file is empty"
             )
             continue
-        comments.append(
-            {
-                "path": filename,
-                # "line": line,
-                "position": 1,
-                "body": review(
-                    filename,
-                    content,
-                    args.openai_model,
-                    args.openai_temperature,
-                    args.openai_max_tokens,
-                ),
-            }
+        body = review(
+            filename,
+            content,
+            args.openai_model,
+            args.openai_temperature,
+            args.openai_max_tokens,
         )
+        if body != "":
+            debug(f"attaching comment body to review:\n{body}")
+            comments.append(
+                {
+                    "path": filename,
+                    # "line": line,
+                    "position": 1,
+                    "body": body,
+                }
+            )
 
     if len(comments) > 0:
         pull.create_review(
