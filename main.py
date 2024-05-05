@@ -26,14 +26,28 @@ def code_type(filename: str) -> str | None:
                 return "Python"
 
 
-def prompt(filename: str, contents: str) -> str:
+def prompt(
+    filename: str,
+    contents: str,
+    pr_description: str,
+    comments: List[str],
+    readme: str,
+) -> str:
     code = "code"
     type = code_type(filename)
     if type:
         code = f"{type} {code}"
 
+    additional_context = (
+        f"PR Description (provides intent and high-level overview):\n{pr_description}\n\n"
+        + "PR Comments (feedback and discussions from team members):\n"
+        + "\n".join(comments)
+        + "\n\nREADME (project overview and setup instructions):\n"
+        + f"{readme}\n\n"
+    )
+
     return (
-        f"Please evaluate the {code} below.\n"
+        f"Please evaluate the {code} below with the following additional context:\n{additional_context}\n"
         "Use the following checklist to guide your analysis:\n"
         "   1. Documentation Defects:\n"
         "       a. Naming: Assess the quality of software element names.\n"
@@ -60,6 +74,30 @@ def prompt(filename: str, contents: str) -> str:
         "Provide your feedback in a numbered list for each category. At the end of your answer, summarize the recommended changes to improve the quality of the code provided.\n"
         f"```\n{contents}\n```"
     )
+
+
+def fetch_contextual_info(
+    pull: PullRequest.PullRequest, repo
+) -> Tuple[str, List[str], str]:
+    pr_description = pull.body or "No description provided."
+    comments = [
+        comment.body
+        for comment in list(pull.get_issue_comments())
+        + list(pull.get_review_comments())
+        if not comment.user.type == "Bot"
+    ]
+    # Try to fetch README file content, considering different common casings
+    readme_filenames = ["README.md", "Readme.md", "readme.md", "README.MD", "ReadMe.md"]
+    readme_content = "No README file found."
+    for filename in readme_filenames:
+        try:
+            readme_content = repo.get_contents(filename).decoded_content.decode("utf8")
+            break  # If found, break out of the loop
+        except Exception:
+            # Continue trying other filenames if not found
+            continue
+
+    return pr_description, comments, readme_content
 
 
 def is_merge_commit(commit: Commit.Commit) -> bool:
@@ -93,11 +131,21 @@ def files_for_review(
 
 
 def review(
-    filename: str, content: str, model: str, temperature: float, max_tokens: int
+    filename: str,
+    content: str,
+    model: str,
+    temperature: float,
+    max_tokens: int,
+    pr_description: str,
+    comments: List[str],
+    readme: str,
 ) -> str:
     x = 0
     while True:
         try:
+            prompt_text = prompt(filename, content, pr_description, comments, readme)
+            info(f"requesting OpenAI review for file {filename}")
+            info(f"prompt text:\n{prompt_text}")
             chat_review = (
                 openai.ChatCompletion.create(
                     model=model,
@@ -106,7 +154,7 @@ def review(
                     messages=[
                         {
                             "role": "user",
-                            "content": prompt(filename, content),
+                            "content": prompt_text,
                         }
                     ],
                 )
@@ -118,7 +166,7 @@ def review(
             if x < OPENAI_MAX_RETRIES:
                 info("OpenAI rate limit hit, backing off and trying again...")
                 sleep(OPENAI_BACKOFF_SECONDS)
-                x+=1
+                x += 1
             else:
                 raise Exception(
                     f"finally failing request to OpenAI platform for code review, max retries {OPENAI_MAX_RETRIES} exceeded"
@@ -154,6 +202,7 @@ def main():
     parser.add_argument(
         "--files",
         help="Comma separated list of UNIX file patterns to target for review",
+        default="*",
     )
     parser.add_argument(
         "--logging",
@@ -174,6 +223,8 @@ def main():
     comments = []
     files = files_for_review(pull, file_patterns)
     info(f"files for review: {files}")
+    pr_description, pr_comments, readme = fetch_contextual_info(pull, repo)
+
     for filename, commit in files:
         debug(f"starting review for file {filename} and commit sha {commit.sha}")
         content = repo.get_contents(filename, commit.sha).decoded_content.decode("utf8")
@@ -188,6 +239,9 @@ def main():
             args.openai_model,
             args.openai_temperature,
             args.openai_max_tokens,
+            pr_description,
+            pr_comments,
+            readme,
         )
         if body != "":
             debug(f"attaching comment body to review:\n{body}")
