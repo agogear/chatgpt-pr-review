@@ -243,7 +243,7 @@ def main():
             pr_comments,
             readme,
         )
-        if body != "":
+        if body and body != "":
             debug(f"attaching comment body to review:\n{body}")
             comments.append(
                 {
