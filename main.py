@@ -118,7 +118,7 @@ def review(
             if x < OPENAI_MAX_RETRIES:
                 info("OpenAI rate limit hit, backing off and trying again...")
                 sleep(OPENAI_BACKOFF_SECONDS)
-                x+=1
+                x += 1
             else:
                 raise Exception(
                     f"finally failing request to OpenAI platform for code review, max retries {OPENAI_MAX_RETRIES} exceeded"
@@ -189,7 +189,7 @@ def main():
             args.openai_temperature,
             args.openai_max_tokens,
         )
-        if body != "":
+        if body and body != "":
             debug(f"attaching comment body to review:\n{body}")
             comments.append(
                 {
