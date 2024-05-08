@@ -39,7 +39,7 @@ jobs:
     name: ChatGPT code review
     runs-on: ubuntu-latest
     steps:
-      - uses: agogear/chatgpt-pr-review@0.0.11
+      - uses: agogear/chatgpt-pr-review@latest # or a specific version
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
