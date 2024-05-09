@@ -106,7 +106,7 @@ def is_merge_commit(commit: Commit.Commit) -> bool:
 
 def files_for_review(
     pull: PullRequest.PullRequest, patterns: List[str]
-) -> Iterable[Tuple[str, Commit.Commit]]:
+) -> Iterable[Tuple[str, Commit.Commit, str]]:
     changes = {}
     commits = pull.get_commits()
     for commit in commits:
@@ -114,10 +114,22 @@ def files_for_review(
             info(f"skipping commit {commit.sha} because it's a merge commit")
             continue
         for file in commit.files:
-            if file.status in ["unchanged", "removed"]:
+            if file.status in ("unchanged", "removed"):
                 info(
                     f"skipping file {file.filename} in commit {commit.sha} because its status is {file.status}"
                 )
+                continue
+            if file.status == "renamed":
+                info(
+                    f"Skipping file {file.filename} in commit {commit.sha} because it was renamed from {file.previous_filename}"
+                )
+                if file.previous_filename in changes:
+                    # rename the key in the changes dict to ensure review is done on the correct file
+                    info(
+                        f"renaming file {file.previous_filename} to {file.filename} in changes"
+                    )
+                    changes[file.filename] = changes.pop(file.previous_filename)
+
                 continue
             if not file.patch or file.patch == "":
                 info(
@@ -126,7 +138,12 @@ def files_for_review(
                 continue
             for pattern in patterns:
                 if fnmatch(file.filename, pattern):
-                    changes[file.filename] = commit
+                    changes[file.filename] = {
+                        "sha": commit.sha,
+                        "filename": file.filename,
+                    }
+                    info(f"adding file {file.filename} to review")
+
     return changes.items()
 
 
@@ -201,7 +218,7 @@ def main():
     )
     parser.add_argument(
         "--files",
-        help="Comma separated list of UNIX file patterns to target for review"
+        help="Comma separated list of UNIX file patterns to target for review",
     )
     parser.add_argument(
         "--logging",
@@ -223,13 +240,15 @@ def main():
     files = files_for_review(pull, file_patterns)
     info(f"files for review: {files}")
     pr_description, pr_comments, readme = fetch_contextual_info(pull, repo)
-
     for filename, commit in files:
-        debug(f"starting review for file {filename} and commit sha {commit.sha}")
-        content = repo.get_contents(filename, commit.sha).decoded_content.decode("utf8")
+        commit_sha = commit["sha"]
+        commit_filename = commit["filename"]
+
+        debug(f"starting review for file {filename} and commit sha {commit_sha}")
+        content = repo.get_contents(commit_filename, commit_sha).decoded_content.decode("utf8")
         if len(content) == 0:
             info(
-                f"skipping file {filename} in commit {commit.sha} because the file is empty"
+                f"skipping file {filename} in commit {commit_sha} because the file is empty"
             )
             continue
         body = review(
