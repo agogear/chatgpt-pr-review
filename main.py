@@ -11,6 +11,8 @@ from github import Github, PullRequest, Commit
 OPENAI_BACKOFF_SECONDS = 20  # 3 requests per minute
 OPENAI_MAX_RETRIES = 3
 
+MAX_FILES_ALLOWED_FOR_REVIEW = 10
+
 
 def code_type(filename: str) -> str | None:
     match = search(r"^.*\.([^.]*)$", filename)
@@ -236,10 +238,18 @@ def main():
 
     repo = g.get_repo(os.getenv("GITHUB_REPOSITORY"))
     pull = repo.get_pull(args.github_pr_id)
-    comments = []
     files = files_for_review(pull, file_patterns)
+
+    n_files = len(files)
+    if n_files > MAX_FILES_ALLOWED_FOR_REVIEW:
+        raise Exception(
+            f"too many files to review ({n_files}), limit is {MAX_FILES_ALLOWED_FOR_REVIEW}"
+            "Make sure to target specific files using the --files argument in action configuration"
+        )
+
     info(f"files for review: {files}")
     pr_description, pr_comments, readme = fetch_contextual_info(pull, repo)
+    comments = []
     for filename, commit in files:
         commit_sha = commit["sha"]
         commit_filename = commit["filename"]
