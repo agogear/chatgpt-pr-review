@@ -138,13 +138,15 @@ def files_for_review(
                     f"skipping file {file.filename} in commit {commit.sha} because it has no patch"
                 )
                 continue
-            for pattern in patterns:
-                if fnmatch(file.filename, pattern):
-                    changes[file.filename] = {
-                        "sha": commit.sha,
-                        "filename": file.filename,
-                    }
-                    info(f"adding file {file.filename} to review")
+
+            if any(
+                fnmatch(file.filename.strip(), pattern.strip()) for pattern in patterns
+            ):
+                changes[file.filename] = {
+                    "sha": commit.sha,
+                    "filename": file.filename,
+                }
+                info(f"adding file {file.filename} to review")
 
     return changes.items()
 
@@ -255,7 +257,9 @@ def main():
         commit_filename = commit["filename"]
 
         debug(f"starting review for file {filename} and commit sha {commit_sha}")
-        content = repo.get_contents(commit_filename, commit_sha).decoded_content.decode("utf8")
+        content = repo.get_contents(commit_filename, commit_sha).decoded_content.decode(
+            "utf8"
+        )
         if len(content) == 0:
             info(
                 f"skipping file {filename} in commit {commit_sha} because the file is empty"
@@ -290,3 +294,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print(fnmatch("main.py", "*.py"))
