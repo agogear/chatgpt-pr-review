@@ -201,8 +201,7 @@ def main():
     )
     parser.add_argument(
         "--files",
-        help="Comma separated list of UNIX file patterns to target for review",
-        default="*",
+        help="Comma separated list of UNIX file patterns to target for review"
     )
     parser.add_argument(
         "--logging",
