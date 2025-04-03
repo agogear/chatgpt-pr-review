@@ -42,7 +42,7 @@ jobs:
             - uses: agogear/chatgpt-pr-review@0.0.13
               with:
                   openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  github_token: ${{ secrets.GIT_TOKEN }}
                   github_pr_id: ${{ github.event.number }}
 ```
 
