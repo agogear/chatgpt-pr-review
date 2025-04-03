@@ -15,9 +15,9 @@ inputs:
     required: false
     default: "*"
   openai_model:
-    description: "GPT-3 model name."
+    description: "GPT-4 model name."
     required: false
-    default: "gpt-4o"
+    default: "gpt-4o-mini"
   openai_temperature:
     description: "Sampling temperature, [0, 1]. Higher values mean the model will take more risks when generating answers."
     required: false
