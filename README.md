@@ -23,12 +23,13 @@ The action targets all new or modified files for review, you can (and probably s
 
 ### Workflow configuration
 
-An example configuration, note:
+Configuration:
 
 -   the action is designed to review pull requests, as such the workflow should be triggered on `pull_request`
 -   the OpenAI API key is provided as a GitHub secret, you may need to adjust this configuration to extract the secret you created above
 -   the action makes use of the default GitHub token (as discussed above), this token is exposed as a GitHub secret `secrets.GITHUB_TOKEN`
-
+-   An example is provided below: .github/workflows/pr-chat-review.yaml (.yaml file must be inside .github/workflows/ folder)
+  
 ```yaml
 name: pr-review
 on:
