@@ -203,9 +203,9 @@ def main():
     )
     parser.add_argument(
         "--openai_model",
-        default="gpt-4o-mini",
-        help="GPT-4 model to use. Options: gpt-4o-mini, text-davinci-002, "
-        "text-babbage-001, text-curie-001, text-ada-001. Recommended: gpt-4o-mini",
+        default="gpt-5-nano",
+        help="GPT model to use. Options: gpt-5-nano, "
+        "gpt-5-mini, gpt-4o-mini. Recommended: gpt-5-nano",
     )
     parser.add_argument(
         "--openai_temperature",
