@@ -216,7 +216,7 @@ def main():
     )
     parser.add_argument(
         "--openai_max_tokens",
-        default=2048,
+        default=8192,
         type=int,
         help="The maximum number of tokens to generate in the completion.",
     )
