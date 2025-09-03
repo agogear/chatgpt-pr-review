@@ -46,7 +46,7 @@ jobs:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
                   github_pr_id: ${{ github.event.number }}
                   files: "*.js, *ts, *.py, *.cpp, *.java"
-                  openai_model: gpt-4o-mini
+                  openai_model: gpt-5-nano
 ```
 
 ### Optional: Pull Request template configuration
