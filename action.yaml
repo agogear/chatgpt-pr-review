@@ -28,7 +28,7 @@ inputs:
   openai_max_tokens:
     description: "The maximum number of tokens to generate in the completion."
     required: false
-    default: "2048"
+    default: "8192"
   logging:
     description: "The level to log at. One of [debug, info, warning, error]"
     required: false
