@@ -209,7 +209,7 @@ def main():
     )
     parser.add_argument(
         "--openai_temperature",
-        default=0.5,
+        default=1,
         type=float,
         help="Sampling temperature to use, a float [0, 1]. Higher values "
         "mean the model will take more risks. Recommended: 0.5",
