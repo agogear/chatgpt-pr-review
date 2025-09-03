@@ -171,7 +171,7 @@ def review(
                 openai.ChatCompletion.create(
                     model=model,
                     temperature=temperature,
-                    max_tokens=max_tokens,
+                    max_completion_tokens=max_tokens,
                     messages=[
                         {
                             "role": "user",
@@ -205,7 +205,7 @@ def main():
         "--openai_model",
         default="gpt-5-nano",
         help="GPT model to use. Options: gpt-5-nano, "
-        "gpt-5-mini, gpt-4o-mini. Recommended: gpt-5-nano",
+        "gpt-5-mini. Recommended: gpt-5-nano",
     )
     parser.add_argument(
         "--openai_temperature",
