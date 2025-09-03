@@ -24,7 +24,7 @@ inputs:
   openai_temperature:
     description: "Sampling temperature, [0, 1]. Higher values mean the model will take more risks when generating answers."
     required: false
-    default: "0.5"
+    default: "1"
   openai_max_tokens:
     description: "The maximum number of tokens to generate in the completion."
     required: false
